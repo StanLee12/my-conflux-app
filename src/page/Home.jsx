@@ -24,6 +24,10 @@ const contract = conflux.Contract({
   address: env.CONTRACT_ADDRESS,
 });
 
+if (!env.PRIVATE_KEY) {
+    message.error('请设置Private Key');
+}
+
 const account = conflux.wallet.addPrivateKey(env.PRIVATE_KEY);
 
 const provider = window.conflux;
@@ -261,15 +265,13 @@ function Home() {
                 </Space>
             </Card>
             <Card title='NFT URI查询'>
-              <Space direction='vertical' align='center' size='middle'>
-                  <Typography.Text
-                      style={{
-                        width: 300
-                      }}
-                      ellipise='true'
+              <Space direction='vertical' align='center' size='middle' style={{ width: 300 }}>
+                  <Typography.Paragraph
+                      style={{ width: 250 }}
                       strong
                       copyable
-                  >{`图片地址: ${tokenUri}`}</Typography.Text>
+                      ellipsis={{ rows: 5, expandable: true, symbol: 'more' }}
+                  >{`图片地址: ${tokenUri}`}</Typography.Paragraph>
                   <Input
                     placeholder='Token Id'
                     size='large'
