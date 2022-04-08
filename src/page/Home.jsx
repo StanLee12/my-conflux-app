@@ -6,6 +6,12 @@ import ABI from '../abi/LongNFT.json';
 import env from '../config/env';
 const { Header, Content } = Layout;
 
+
+/**
+ *  networkId
+ * '1029': Conflux Main Network
+ *  '1': Conflux Test network
+ */
 const conflux = new Conflux({
   url: env.CONFLUX_NODE_RPC,
   networkId: 1,
@@ -20,17 +26,21 @@ const contract = conflux.Contract({
 
 const account = conflux.wallet.addPrivateKey(env.PRIVATE_KEY);
 
+const provider = window.conflux;
+
 function Home() {
   const [address, setAddress] = useState('');
   const [loading, setLoading] = useState(false);
   const [balance, setBalance] = useState('');
   const [contractName, setContractName] = useState('');
   const [fcBalance, setFcBalance] = useState('');
-  const [tokenUri, setTokenUri] = useState('');
+  const [imageUri, setImageUri] = useState('');
   const [estimateInfo, setEstimateInfo] = useState('');
   const [transactionHash, setTransactionHash] = useState('');
   const [tokenId, setTokenId] = useState('');
   const [tokenIds, setTokenIds] = useState(0);
+  const [selfAddress, setSelfAddress] = useState();
+  const [tokenUri, setTokenUri] = useState('');
 
   const getBalance = async () => {
       if (!address) {
@@ -63,7 +73,7 @@ function Home() {
         message.error('请输入正确地址');
         return;
       }
-      const fcBalance = await contract.tokenOfOwnerByIndex(address, 3);
+      const fcBalance = await contract.tokenOfOwnerByIndex(selfAddress, 0);
       console.log('yue ', fcBalance);
       setFcBalance(fcBalance);
     } catch (error) {
@@ -72,12 +82,12 @@ function Home() {
   };
 
   const estimate = async () => {
-      if (!address && !tokenUri) {
+      if (!address && !imageUri) {
           message.error('请完善信息');
           return;
       }
       try {
-        const estimated = await contract.publish(address, tokenUri).estimateGasAndCollateral({ from: account });
+        const estimated = await contract.publish(address, imageUri).estimateGasAndCollateral({ from: account });
         setEstimateInfo(JSON.stringify(estimated));
       } catch (error) {
         message.error(error.message);
@@ -85,12 +95,12 @@ function Home() {
   };
 
   const publish = async() => {
-    if (!address && !tokenUri) {
+    if (!address && !imageUri) {
         message.error('请完善信息');
         return;
     }
     try {
-      const transactionHash = await contract.publish(address, tokenUri).sendTransaction({ from: account });
+      const transactionHash = await contract.publish(address, imageUri).sendTransaction({ from: account });
       setTransactionHash(transactionHash);
       message.success('发布NFT成功');
     } catch (error) {
@@ -113,9 +123,22 @@ function Home() {
 
   const countTokenIds = async() => {
     try{
-      const result = await contract.totalSupply();
+      const result = await contract.countTokenIds();
       console.log('cahuxnjieguo', result);
       setTokenIds(result);
+    } catch (error) {
+      message.error(error.message);
+    }
+  };
+
+  const connectWallet = async () => {
+    try {
+      if (!window.conflux) {
+        message.error('请先安装Fluent钱包');
+        return;
+      }
+      const { result } = await provider.send('cfx_requestAccounts');
+      setSelfAddress(result[0]);
     } catch (error) {
       message.error(error.message);
     }
@@ -124,7 +147,17 @@ function Home() {
   return (
     <>
       <Layout>
-        <Header style={{ backgroundColor: '#a0d911', color: 'white', fontSize: 20 }}>Conflux</Header>
+        <Header style={{ backgroundColor: '#a0d911', color: 'white', fontSize: 20 }}>
+          Conflux
+          <Button disabled={selfAddress} type="primary" shape="round" style={{marginLeft: 200}} onClick={connectWallet}>
+            {selfAddress ? '已连接' : '连接钱包'}
+          </Button>
+          <Typography.Text
+            style={{ fontSize: 12, color: 'white' }}
+          >
+            {selfAddress ? `钱包: ${JSON.stringify(selfAddress)}` : ''}
+          </Typography.Text>
+        </Header>
         <Content style={{ padding: 5, alignItems: 'center', justifyContent: 'center' }}>
           <Space align='start' size='middle' direction='vertical'>
             <Space align='start' size='middle'>
@@ -173,15 +206,6 @@ function Home() {
                 <Typography.Text
                     strong
                 >{`NFT余额: ${fcBalance}`}</Typography.Text>
-                <Input
-                    placeholder='钱包地址'
-                    size='large'
-                    style={{width: 500}}
-                    allowClear
-                    onChange={(event) => {
-                        setAddress(event.target.value);
-                    }}
-                />
                 <Button
                   type='primary'
                   onClick={getFcBalance}
@@ -217,7 +241,7 @@ function Home() {
                     style={{width: 500}}
                     allowClear
                     onChange={(event) => {
-                        setTokenUri(event.target.value);
+                        setImageUri(event.target.value);
                     }}
                 />
                   <Space>
@@ -242,11 +266,7 @@ function Home() {
                       style={{
                         width: 300
                       }}
-                      ellipsis={{
-                          rows: 3,
-                          expandable: true,
-                        }
-                      }
+                      ellipise='true'
                       strong
                       copyable
                   >{`图片地址: ${tokenUri}`}</Typography.Text>
