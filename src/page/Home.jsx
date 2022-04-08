@@ -71,14 +71,19 @@ function Home() {
       };
   };
 
-  const getFcBalance = async () => {
+  const getOwnedNFT = async () => {
     try {
       if (!selfAddress) {
         message.error('请先连接钱包');
         return;
       }
-      const fcBalance = await contract.tokenOfOwnerByIndex(selfAddress, 0);
-      setFcBalance(fcBalance);
+      const balance = await contract.balanceOf(selfAddress);
+      const tokens =[];
+      for (let i = 0; i < balance; i += 1) {
+        const fcBalance = await contract.tokenOfOwnerByIndex(selfAddress, i);
+        tokens.push(fcBalance);
+      }
+      setFcBalance(tokens.join(','));
     } catch (error) {
       message.error(error.message);
     };
@@ -203,17 +208,17 @@ function Home() {
             </Space>
             </Card>
             <Card
-              title='NFT余额查询'
+              title='持有的NFT'
             >
               <Space style={{ alignItems: 'center', justifyContent: 'center' }} direction='vertical' align='center' size='middle'>
                 <Typography.Text
                     strong
-                >{`NFT余额: ${fcBalance}`}</Typography.Text>
+                >{`NFT编号: ${fcBalance}`}</Typography.Text>
                 <Button
                   type='primary'
-                  onClick={getFcBalance}
+                  onClick={getOwnedNFT}
                 >
-                  查询NFT余额
+                  查询持有NFT
                 </Button>
             </Space>
             </Card>
