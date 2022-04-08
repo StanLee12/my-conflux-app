@@ -73,12 +73,11 @@ function Home() {
 
   const getFcBalance = async () => {
     try {
-      if (!address) {
-        message.error('请输入正确地址');
+      if (!selfAddress) {
+        message.error('请先连接钱包');
         return;
       }
       const fcBalance = await contract.tokenOfOwnerByIndex(selfAddress, 0);
-      console.log('yue ', fcBalance);
       setFcBalance(fcBalance);
     } catch (error) {
       message.error(error.message);
